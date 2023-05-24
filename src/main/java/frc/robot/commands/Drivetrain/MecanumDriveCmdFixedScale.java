@@ -42,14 +42,10 @@ public class MecanumDriveCmdFixedScale extends CommandBase {
         (DrivetrainConstants.maxDriveSpeed * (-scaleFactor + 1) / 2) * forwardFunction.get();
 
     speedSide =
-        -1
-            * (DrivetrainConstants.maxDriveSpeed * (-scaleFactor + 1) / 2)
-            * sideFunction.get();
+        -1 * (DrivetrainConstants.maxDriveSpeed * (-scaleFactor + 1) / 2) * sideFunction.get();
 
     speedRotate =
-        -1
-            * (DrivetrainConstants.maxTurnSpeed * (-scaleFactor + 1) / 2)
-            * rotateFunction.get();
+        -1 * (DrivetrainConstants.maxTurnSpeed * (-scaleFactor + 1) / 2) * rotateFunction.get();
 
     if (limit.get()) {
       speedForward = 0;
