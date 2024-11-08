@@ -10,10 +10,10 @@ import com.revrobotics.CANSparkLowLevel.MotorType;
 import com.revrobotics.CANSparkMax;
 
 public class DriveTrainSubsystem extends SubsystemBase {
-  private CANSparkMax frontLeft = new CANSparkMax(DrivetrainConstants.frontLeftTalonPort, MotorType.kBrushless);
-  private CANSparkMax frontRight = new CANSparkMax(DrivetrainConstants.frontRightTalonPort, MotorType.kBrushless);
-  private CANSparkMax backLeft = new CANSparkMax(DrivetrainConstants.backLeftTalonPort, MotorType.kBrushless);
-  private CANSparkMax backRight = new CANSparkMax(DrivetrainConstants.backRightTalonPort, MotorType.kBrushless);
+  private CANSparkMax frontLeft = new CANSparkMax(DrivetrainConstants.frontLeftID, MotorType.kBrushless);
+  private CANSparkMax frontRight = new CANSparkMax(DrivetrainConstants.frontRightID, MotorType.kBrushless);
+  private CANSparkMax backLeft = new CANSparkMax(DrivetrainConstants.backLeftID, MotorType.kBrushless);
+  private CANSparkMax backRight = new CANSparkMax(DrivetrainConstants.backRightID, MotorType.kBrushless);
 
   public MecanumDrive mecDrive = new MecanumDrive(frontLeft, backLeft, frontRight, backRight);
 
