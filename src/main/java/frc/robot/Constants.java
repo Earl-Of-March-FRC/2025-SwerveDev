@@ -70,10 +70,10 @@ public final class Constants {
   // among us - Alex Z
   public static class OperatorConstants {
 
-    public static final int kDriverControllerPort = 3;
+    public static final int kDriverControllerPort = 0;
     public static final int forwardAxis = 1;
-    public static final int sideAxis = 0;
-    public static final int rotationAxis = 2;
+    public static final int sideAxis = 4;
+    public static final int rotationAxis = 0;
     public static final int cubePickUpButton = 3;
     public static final int conePickUpButton = 3;
     public static final int cubePlaceTopButton = 3;
