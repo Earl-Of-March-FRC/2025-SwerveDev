@@ -1,12 +1,12 @@
 package frc.robot.commands.Drivetrain;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.subsystems.DriveTrainSubsystem;
 import java.util.function.Supplier;
 
-public class MecanumDriveCmd extends CommandBase {
+public class MecanumDriveCmd extends Command {
 
   private DriveTrainSubsystem driveSubsystem;
   private Supplier<Double> forwardFunction, sideFunction, rotateFunction, scaleFactor;
