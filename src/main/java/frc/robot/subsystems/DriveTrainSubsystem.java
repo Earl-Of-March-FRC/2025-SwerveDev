@@ -1,43 +1,27 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.drive.MecanumDrive;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.DrivetrainConstants;
-import frc.robot.Constants.ScaleFactorConstants;
-
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.CANSparkMax;
+import frc.robot.Constants.DriveConstants;
 
 public class DriveTrainSubsystem extends SubsystemBase {
-  private CANSparkMax frontLeft = new CANSparkMax(DrivetrainConstants.frontLeftID, MotorType.kBrushless);
-  private CANSparkMax frontRight = new CANSparkMax(DrivetrainConstants.frontRightID, MotorType.kBrushless);
-  private CANSparkMax backLeft = new CANSparkMax(DrivetrainConstants.backLeftID, MotorType.kBrushless);
-  private CANSparkMax backRight = new CANSparkMax(DrivetrainConstants.backRightID, MotorType.kBrushless);
 
-  public MecanumDrive mecDrive = new MecanumDrive(frontLeft, backLeft, frontRight, backRight);
-
+  private MAXSwerveModule m_swerveModule;
+  
   public DriveTrainSubsystem() {
-    frontLeft.setInverted(true);
-    backLeft.setInverted(true);
+    m_swerveModule = new MAXSwerveModule(DriveConstants.kDriveCanId, DriveConstants.kTurningCanId, DriveConstants.kAngularOffset);
   }
 
-  public void setMecanumPermanent(double x, double y, double rx) {
-    mecDrive.driveCartesian(x, y, rx);
+  public void setSwerveState(SwerveModuleState state) {
+    SwerveModuleState desiredState = new SwerveModuleState();
+    desiredState.speedMetersPerSecond = state.speedMetersPerSecond * 0.2;
+    desiredState.angle = desiredState.angle;
+    m_swerveModule.setDesiredState(state);
   }
 
-  public void setMecanum(double x, double y, double rx) {
-    if (Math.abs(x) < ScaleFactorConstants.driveDeadzone) x = 0;
-    if (Math.abs(y) < ScaleFactorConstants.driveDeadzone) y = 0;
-    if (Math.abs(rx) < ScaleFactorConstants.rotateDeadzone) rx = 0;
-
-    mecDrive.driveCartesian(x, y, rx);
-
-    SmartDashboard.putNumber("x", x);
-    SmartDashboard.putNumber("y", y);
-    SmartDashboard.putNumber("rx", rx);
+  public void resetEncoders() {
+    m_swerveModule.resetEncoders();
   }
-
 
   @Override
   public void periodic() {}
