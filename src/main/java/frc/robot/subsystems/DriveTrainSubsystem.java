@@ -23,6 +23,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
     m_swerveModule.resetEncoders();
   }
 
+  public SwerveModuleState getState() {
+    return m_swerveModule.getState();
+  }
+
   @Override
   public void periodic() {}
 
