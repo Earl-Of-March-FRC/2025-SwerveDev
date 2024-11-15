@@ -1,29 +1,36 @@
 package frc.robot;
 
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Drivetrain.MecanumDriveCmd;
+import frc.robot.Constants.OIConstants;
+import frc.robot.commands.SwerveDriveCmd;
 import frc.robot.subsystems.DriveTrainSubsystem;
 
 public class RobotContainer {
 
   final DriveTrainSubsystem driveSubsystem = new DriveTrainSubsystem();
 
-  public final XboxController controller = new XboxController(OperatorConstants.kDriverControllerPort);
+  public final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
   public RobotContainer() {
 
     driveSubsystem.setDefaultCommand(
-        new MecanumDriveCmd(
+        new SwerveDriveCmd(
             driveSubsystem,
-            () -> controller.getRawAxis(OperatorConstants.sideAxis),
-            () -> controller.getRawAxis(OperatorConstants.forwardAxis),
-            () -> controller.getRawAxis(OperatorConstants.rotationAxis),
-            () -> 1d,
-            () -> false));
-
+            () -> Math.sqrt(
+              Math.pow(MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband), 2) +  
+              Math.pow(MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband), 2)
+            ),
+            () -> new Rotation2d(Math.atan2(
+              MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband), 
+              MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband)
+            ))
+        )
+    );            
+    
     configureBindings();
   }
 
