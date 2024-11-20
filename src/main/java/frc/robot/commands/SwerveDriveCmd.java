@@ -38,8 +38,23 @@ public class SwerveDriveCmd extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    SwerveModuleState desiredState = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
-    driveSubsystem.setSwerveState(desiredState);
+    double angle = rotationFunction.get().getRadians();
+
+
+    //THe wheels are subtracting by the offset constant!!
+
+    Rotation2d frontLeftRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
+    (Math.sin(angle - DriveConstants.kFrontLeftChassisAngularOffset), Math.cos(angle - DriveConstants.kFrontLeftChassisAngularOffset))));
+    Rotation2d frontRightRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
+    (Math.sin(angle - DriveConstants.kFrontRightChassisAngularOffset), Math.cos(angle - DriveConstants.kFrontRightChassisAngularOffset))));
+    Rotation2d backLeftRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
+    (Math.sin(angle - DriveConstants.kBackLeftChassisAngularOffset), Math.cos(angle - DriveConstants.kBackLeftChassisAngularOffset))));
+    Rotation2d backRightRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
+    (Math.sin(angle - DriveConstants.kBackRightChassisAngularOffset), Math.cos(angle - DriveConstants.kBackRightChassisAngularOffset))));
+
+    SwerveModuleState desiredStateFrontLeft = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
+    SwerveModuleState desiredStateBackRight = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
+    driveSubsystem.setSwerveState(desiredStateFrontLeft, desiredStateBackRight);
   }
 
   // Called once the command ends or is interrupted.
