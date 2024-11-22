@@ -38,7 +38,7 @@ public class SwerveDriveCmd extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    SwerveModuleState desiredState = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
+    SwerveModuleState desiredState = new SwerveModuleState(velocityFunction.get(), rotationFunction.get());
     driveSubsystem.setSwerveState(desiredState);
   }
 
