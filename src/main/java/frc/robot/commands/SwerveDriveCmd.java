@@ -21,13 +21,20 @@ public class SwerveDriveCmd extends Command {
   private Supplier<Double> yVelFunction;
   private Supplier<Double> rotVelFunction;
 
-  SlewRateLimiter rotLimiter = new SlewRateLimiter(DriveConstants.kDirectionSlewRate);
-  SlewRateLimiter magLimiter = new SlewRateLimiter(DriveConstants.kMagnitudeSlewRate);
+  // TODO: use individual limiters for each module
+  // SlewRateLimiter rotLimiter = new SlewRateLimiter(DriveConstants.kDirectionSlewRate);
+  // SlewRateLimiter magLimiter = new SlewRateLimiter(DriveConstants.kMagnitudeSlewRate);
 
   // base vectors (front left, back right)
   Translation2d baseXVec[] = {new Translation2d(1, 0), new Translation2d(1, 0)};
   Translation2d baseYVec[] = {new Translation2d(0, 1), new Translation2d(0, 1)};
-  Translation2d baseRotVec[] = {new Translation2d(1, 1), new Translation2d(-1, -1)};
+  Translation2d baseRotVec[] = {new Translation2d(-1, 1), new Translation2d(1, -1)};
+
+   // Previous angle (so the modules don't rotate in place)
+  Rotation2d prevAngle[] = new Rotation2d[] {
+    new Rotation2d(0),
+    new Rotation2d(0)
+  };
 
   public SwerveDriveCmd(DriveTrainSubsystem dSub, Supplier<Double> xVel, Supplier<Double> yVel, Supplier<Double> w) {
     driveSubsystem = dSub;
@@ -52,30 +59,38 @@ public class SwerveDriveCmd extends Command {
     SwerveModuleState desiredStateFrontLeft = new SwerveModuleState(frontLeftVec.getNorm(), frontLeftVec.getAngle());
     SwerveModuleState desiredStateBackRight = new SwerveModuleState(backRightVec.getNorm(), backRightVec.getAngle());
 
-    // if (!(frontLeftVec.getNorm() <= 0.1 || backRightVec.getNorm() <= 0.1)) {
-    if (true) {
-      Double maxVel = Math.max(desiredStateFrontLeft.speedMetersPerSecond, desiredStateBackRight.speedMetersPerSecond);
-      if (maxVel > 1) {
-        desiredStateFrontLeft.speedMetersPerSecond /= maxVel;
-        desiredStateBackRight.speedMetersPerSecond /= maxVel;
-      }
-
-      desiredStateFrontLeft.speedMetersPerSecond = magLimiter.calculate(desiredStateFrontLeft.speedMetersPerSecond);
-      desiredStateBackRight.speedMetersPerSecond = magLimiter.calculate(desiredStateBackRight.speedMetersPerSecond);
-      desiredStateFrontLeft.angle = new Rotation2d(rotLimiter.calculate(desiredStateFrontLeft.angle.getRadians()));
-      desiredStateBackRight.angle = new Rotation2d(rotLimiter.calculate(desiredStateBackRight.angle.getRadians()));
-
-      desiredStateFrontLeft.angle = desiredStateFrontLeft.angle.plus(new Rotation2d(DriveConstants.kFrontLeftChassisAngularOffset));
-      desiredStateBackRight.angle = desiredStateBackRight.angle.plus(new Rotation2d(DriveConstants.kBackRightChassisAngularOffset));
-    } else {
-      desiredStateFrontLeft.speedMetersPerSecond = 0;
-      desiredStateFrontLeft.angle = driveSubsystem.getFrontLeftState().angle;
-      desiredStateBackRight.speedMetersPerSecond = 0;
-      desiredStateBackRight.angle = driveSubsystem.getBackRightState().angle;
+    // Normalize speeds, so the maximum possible speed is 1
+    Double maxVel = Math.max(desiredStateFrontLeft.speedMetersPerSecond, desiredStateBackRight.speedMetersPerSecond);
+    if (maxVel > 1) {
+      desiredStateFrontLeft.speedMetersPerSecond /= maxVel;
+      desiredStateBackRight.speedMetersPerSecond /= maxVel;
     }
 
-    System.out.println("front left speed " + desiredStateFrontLeft.speedMetersPerSecond);
-    System.out.println("back right speed " + desiredStateBackRight.speedMetersPerSecond);
+    // Slew rate limiters (THIS IS BROKEN)
+    // TODO: Use individual limiters for each module
+    // desiredStateFrontLeft.speedMetersPerSecond = magLimiter.calculate(desiredStateFrontLeft.speedMetersPerSecond);
+    // desiredStateBackRight.speedMetersPerSecond = magLimiter.calculate(desiredStateBackRight.speedMetersPerSecond);
+    // desiredStateFrontLeft.angle = new Rotation2d(rotLimiter.calculate(desiredStateFrontLeft.angle.getRadians()));
+    // desiredStateBackRight.angle = new Rotation2d(rotLimiter.calculate(desiredStateBackRight.angle.getRadians()));
+
+    // Angle offsers (NOT NEEDED)
+    // desiredStateFrontLeft.angle = desiredStateFrontLeft.angle.plus(new Rotation2d(DriveConstants.kFrontLeftChassisAngularOffset));
+    // desiredStateBackRight.angle = desiredStateBackRight.angle.plus(new Rotation2d(DriveConstants.kBackRightChassisAngularOffset));
+    
+    // Prevent rotation in place
+    if (desiredStateFrontLeft.speedMetersPerSecond <= 0.05) {
+      desiredStateFrontLeft.speedMetersPerSecond = 0;
+      desiredStateFrontLeft.angle = prevAngle[0];
+    }
+    if (desiredStateBackRight.speedMetersPerSecond <= 0.05) {
+      desiredStateBackRight.speedMetersPerSecond = 0;
+      desiredStateBackRight.angle = prevAngle[1];
+    }
+    prevAngle[0] = desiredStateFrontLeft.angle;
+    prevAngle[1] = desiredStateBackRight.angle;
+
+    // System.out.println("front left speed " + desiredStateFrontLeft.speedMetersPerSecond);
+    // System.out.println("back right speed " + desiredStateBackRight.speedMetersPerSecond);
     // System.out.println("front left rot " + desiredStateFrontLeft.angle.getDegrees());
     // System.out.println("back right rot " + desiredStateBackRight.angle.getDegrees());
 

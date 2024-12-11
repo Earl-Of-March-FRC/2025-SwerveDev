@@ -2,7 +2,6 @@ package frc.robot;
 
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
@@ -20,9 +19,9 @@ public class RobotContainer {
     driveSubsystem.setDefaultCommand(
         new SwerveDriveCmd(
             driveSubsystem,
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband),
             () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband),
-            () -> MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband),
-            () -> MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerRotAxis), OIConstants.kDriveDeadband)
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerRotAxis), OIConstants.kDriveDeadband)
         )
     );            
     
