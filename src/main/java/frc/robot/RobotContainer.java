@@ -20,14 +20,9 @@ public class RobotContainer {
     driveSubsystem.setDefaultCommand(
         new SwerveDriveCmd(
             driveSubsystem,
-            () -> Math.sqrt(
-              Math.pow(MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband), 2) +  
-              Math.pow(MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband), 2)
-            ),
-            () -> new Rotation2d(Math.atan2(
-              MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband), 
-              MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband)
-            ))
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband),
+            () -> MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband),
+            () -> MathUtil.applyDeadband(controller.getRawAxis(OIConstants.kDriverControllerRotAxis), OIConstants.kDriveDeadband)
         )
     );            
     

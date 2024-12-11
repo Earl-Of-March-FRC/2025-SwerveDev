@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.DriveConstants;
@@ -16,16 +17,23 @@ import frc.robot.subsystems.DriveTrainSubsystem;
 public class SwerveDriveCmd extends Command {
 
   private DriveTrainSubsystem driveSubsystem;
-  private Supplier<Double> velocityFunction;
-  private Supplier<Rotation2d> rotationFunction;
+  private Supplier<Double> xVelFunction;
+  private Supplier<Double> yVelFunction;
+  private Supplier<Double> rotVelFunction;
 
   SlewRateLimiter rotLimiter = new SlewRateLimiter(DriveConstants.kDirectionSlewRate);
   SlewRateLimiter magLimiter = new SlewRateLimiter(DriveConstants.kMagnitudeSlewRate);
 
-  public SwerveDriveCmd(DriveTrainSubsystem dSub, Supplier<Double> vFunc, Supplier<Rotation2d> rFunc) {
+  // base vectors (front left, back right)
+  Translation2d baseXVec[] = {new Translation2d(1, 0), new Translation2d(1, 0)};
+  Translation2d baseYVec[] = {new Translation2d(0, 1), new Translation2d(0, 1)};
+  Translation2d baseRotVec[] = {new Translation2d(1, 1), new Translation2d(-1, -1)};
+
+  public SwerveDriveCmd(DriveTrainSubsystem dSub, Supplier<Double> xVel, Supplier<Double> yVel, Supplier<Double> w) {
     driveSubsystem = dSub;
-    velocityFunction = vFunc;
-    rotationFunction = rFunc;
+    xVelFunction = xVel;
+    yVelFunction = yVel;
+    rotVelFunction = w;
 
     addRequirements(driveSubsystem);
   }
@@ -38,22 +46,39 @@ public class SwerveDriveCmd extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double angle = rotationFunction.get().getRadians();
+    Translation2d frontLeftVec = baseXVec[0].times(xVelFunction.get()).plus(baseYVec[0].times(yVelFunction.get())).plus(baseRotVec[0].times(rotVelFunction.get()));
+    Translation2d backRightVec = baseXVec[1].times(xVelFunction.get()).plus(baseYVec[1].times(yVelFunction.get())).plus(baseRotVec[1].times(rotVelFunction.get()));
 
+    SwerveModuleState desiredStateFrontLeft = new SwerveModuleState(frontLeftVec.getNorm(), frontLeftVec.getAngle());
+    SwerveModuleState desiredStateBackRight = new SwerveModuleState(backRightVec.getNorm(), backRightVec.getAngle());
 
-    //THe wheels are subtracting by the offset constant!!
+    // if (!(frontLeftVec.getNorm() <= 0.1 || backRightVec.getNorm() <= 0.1)) {
+    if (true) {
+      Double maxVel = Math.max(desiredStateFrontLeft.speedMetersPerSecond, desiredStateBackRight.speedMetersPerSecond);
+      if (maxVel > 1) {
+        desiredStateFrontLeft.speedMetersPerSecond /= maxVel;
+        desiredStateBackRight.speedMetersPerSecond /= maxVel;
+      }
 
-    Rotation2d frontLeftRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
-    (Math.sin(angle - DriveConstants.kFrontLeftChassisAngularOffset), Math.cos(angle - DriveConstants.kFrontLeftChassisAngularOffset))));
-    Rotation2d frontRightRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
-    (Math.sin(angle - DriveConstants.kFrontRightChassisAngularOffset), Math.cos(angle - DriveConstants.kFrontRightChassisAngularOffset))));
-    Rotation2d backLeftRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
-    (Math.sin(angle - DriveConstants.kBackLeftChassisAngularOffset), Math.cos(angle - DriveConstants.kBackLeftChassisAngularOffset))));
-    Rotation2d backRightRotation = new Rotation2d(rotLimiter.calculate(Math.atan2
-    (Math.sin(angle - DriveConstants.kBackRightChassisAngularOffset), Math.cos(angle - DriveConstants.kBackRightChassisAngularOffset))));
+      desiredStateFrontLeft.speedMetersPerSecond = magLimiter.calculate(desiredStateFrontLeft.speedMetersPerSecond);
+      desiredStateBackRight.speedMetersPerSecond = magLimiter.calculate(desiredStateBackRight.speedMetersPerSecond);
+      desiredStateFrontLeft.angle = new Rotation2d(rotLimiter.calculate(desiredStateFrontLeft.angle.getRadians()));
+      desiredStateBackRight.angle = new Rotation2d(rotLimiter.calculate(desiredStateBackRight.angle.getRadians()));
 
-    SwerveModuleState desiredStateFrontLeft = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
-    SwerveModuleState desiredStateBackRight = new SwerveModuleState(magLimiter.calculate(velocityFunction.get()), new Rotation2d(rotLimiter.calculate(rotationFunction.get().getRadians())));
+      desiredStateFrontLeft.angle = desiredStateFrontLeft.angle.plus(new Rotation2d(DriveConstants.kFrontLeftChassisAngularOffset));
+      desiredStateBackRight.angle = desiredStateBackRight.angle.plus(new Rotation2d(DriveConstants.kBackRightChassisAngularOffset));
+    } else {
+      desiredStateFrontLeft.speedMetersPerSecond = 0;
+      desiredStateFrontLeft.angle = driveSubsystem.getFrontLeftState().angle;
+      desiredStateBackRight.speedMetersPerSecond = 0;
+      desiredStateBackRight.angle = driveSubsystem.getBackRightState().angle;
+    }
+
+    System.out.println("front left speed " + desiredStateFrontLeft.speedMetersPerSecond);
+    System.out.println("back right speed " + desiredStateBackRight.speedMetersPerSecond);
+    // System.out.println("front left rot " + desiredStateFrontLeft.angle.getDegrees());
+    // System.out.println("back right rot " + desiredStateBackRight.angle.getDegrees());
+
     driveSubsystem.setSwerveState(desiredStateFrontLeft, desiredStateBackRight);
   }
 

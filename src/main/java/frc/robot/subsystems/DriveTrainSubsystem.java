@@ -28,8 +28,12 @@ public class DriveTrainSubsystem extends SubsystemBase {
     m_swerveModuleBackRight.resetEncoders();
   }
 
-  public SwerveModuleState getState() {//We will/must come back to this
+  public SwerveModuleState getFrontLeftState() {
     return m_swerveModuleFrontLeft.getState();
+  }
+
+  public SwerveModuleState getBackRightState() {
+    return m_swerveModuleBackRight.getState();
   }
 
   @Override

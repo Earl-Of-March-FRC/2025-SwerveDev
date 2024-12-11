@@ -46,9 +46,9 @@ public final class Constants {
         new Translation2d(-kWheelBase / 2, -kTrackWidth / 2));
 
     // Angular offsets of the modules relative to the chassis in radians
-    public static final double kFrontLeftChassisAngularOffset = -Math.PI / 2;
+    public static final double kFrontLeftChassisAngularOffset = 0; //-Math.PI / 2;
     public static final double kFrontRightChassisAngularOffset = 0;
-    public static final double kBackLeftChassisAngularOffset = Math.PI;
+    public static final double kBackLeftChassisAngularOffset = 0; //Math.PI;
     public static final double kBackRightChassisAngularOffset = Math.PI / 2;
     //public static final double kAngularOffset = 0;
 
@@ -128,6 +128,7 @@ public final class Constants {
     public static final double kDriveDeadband = 0.1;
     public static final int kDriverControllerXAxis = 0;
     public static final int kDriverControllerYAxis = 1;
+    public static final int kDriverControllerRotAxis = 4;
   }
 
   public static final class AutoConstants {
