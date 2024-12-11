@@ -39,6 +39,12 @@ public class SwerveDriveCmd extends Command {
   @Override
   public void execute() {
     SwerveModuleState desiredState = new SwerveModuleState(velocityFunction.get(), rotationFunction.get());
+
+    // Only change angle if it is moving
+    if (desiredState.speedMetersPerSecond == 0) {
+      desiredState.angle = driveSubsystem.getState().angle;
+    }
+
     driveSubsystem.setSwerveState(desiredState);
   }
 
