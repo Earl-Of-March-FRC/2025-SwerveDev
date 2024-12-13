@@ -65,6 +65,8 @@ public class SwerveDriveCmd extends Command {
       desiredStateFrontLeft.speedMetersPerSecond /= maxVel;
       desiredStateBackRight.speedMetersPerSecond /= maxVel;
     }
+    desiredStateFrontLeft.speedMetersPerSecond *= DriveConstants.kMaxSpeedMetersPerSecond;
+    desiredStateBackRight.speedMetersPerSecond *= DriveConstants.kMaxSpeedMetersPerSecond;
 
     // Slew rate limiters (THIS IS BROKEN)
     // TODO: Use individual limiters for each module
