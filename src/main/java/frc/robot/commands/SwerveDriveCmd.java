@@ -6,6 +6,8 @@ package frc.robot.commands;
 
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -38,6 +40,10 @@ public class SwerveDriveCmd extends Command {
 
   @Override
   public void execute() {
+    Logger.recordOutput("Drive/Inputs/xVel", (double) xSupplier.get());
+    Logger.recordOutput("Drive/Inputs/yVel", ySupplier.get());
+    Logger.recordOutput("Drive/Inputs/omega", omegaSupplier.get());
+
     driveSub.runVelocity(new ChassisSpeeds(xSupplier.get(), ySupplier.get(), omegaSupplier.get()));
   }
 

@@ -5,6 +5,7 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -58,12 +59,7 @@ public class Drivetrain extends SubsystemBase {
 
     Pose2d pose = odometry.update(
       gyroInputs.angle,
-      new SwerveModulePosition[] {
-        modules[0].getPosition(),
-        modules[1].getPosition(),
-        modules[2].getPosition(),
-        modules[3].getPosition()
-      }
+      getModulePositions()
     );
 
     if (DriverStation.isDisabled()) {
@@ -98,16 +94,48 @@ public class Drivetrain extends SubsystemBase {
     }
 
     // TODO: Fix this, we shoudln't need this line with @AutoLogOutput
-    Logger.recordOutput("SwerveStates/Measured", getStates());
+    Logger.recordOutput("SwerveStates/Measured", getModuleStates());
+  }
+
+  public void runModuleStates(SwerveModuleState[] states) {
+    for (int i = 0; i < 4; i++) {
+      modules[i].runState(states[i]);
+    }
   }
 
   @AutoLogOutput(key = "SwerveStates/Measured")
-  private SwerveModuleState[] getStates() {
+  public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
         modules[0].getState(),
         modules[1].getState(),
         modules[2].getState(),
         modules[3].getState()
     };
+  }
+
+  public SwerveModulePosition[] getModulePositions() {
+    return new SwerveModulePosition[] {
+        modules[0].getPosition(),
+        modules[1].getPosition(),
+        modules[2].getPosition(),
+        modules[3].getPosition()
+    };
+  }
+
+  @AutoLogOutput(key = "Drive/Odometry")
+  public Pose2d getPose() {
+    return odometry.getPoseMeters();
+  }
+
+  public void resetOdometry(Rotation2d rotation, SwerveModulePosition[] modulePositions, Pose2d pose) {
+    odometry.resetPosition(rotation, modulePositions, pose);
+  }
+
+  public void resetOdometry(Rotation2d rotation, Pose2d pose) {
+    resetOdometry(rotation, getModulePositions(), pose);
+  }
+
+  public void resetOdometry() {
+    resetOdometry(new Rotation2d(0), getModulePositions(), new Pose2d(new Translation2d(0, 0), new Rotation2d(0)));
   }
 }
