@@ -13,19 +13,17 @@ import frc.robot.Constants.DriveConstants;
 
 public class Drivetrain extends SubsystemBase {
 
-  private final Module[] modules = new Module[2]; // FL, FR, BL, BR
+  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private Rotation2d[] prevAngle = new Rotation2d[] {
       new Rotation2d(),
       new Rotation2d()
   };
 
-  Translation2d baseXVec[] = { new Translation2d(1, 0), new Translation2d(1, 0) };
-  Translation2d baseYVec[] = { new Translation2d(0, 1), new Translation2d(0, 1) };
-  Translation2d baseRotVec[] = { new Translation2d(-1, 1), new Translation2d(1, -1) };
-
-  public Drivetrain(ModuleIO flModuleIO, ModuleIO brModuleIO) {
+  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
     modules[0] = new Module(flModuleIO, 0);
-    modules[1] = new Module(brModuleIO, 3);
+    modules[1] = new Module(frModuleIO, 1);
+    modules[2] = new Module(blModuleIO, 2);
+    modules[3] = new Module(brModuleIO, 3);
   }
 
   @Override
@@ -40,35 +38,17 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void runVelocity(ChassisSpeeds speeds) {
-    Translation2d frontLeftVec = baseXVec[0].times(speeds.vxMetersPerSecond)
-        .plus(baseYVec[0].times(speeds.vyMetersPerSecond)).plus(baseRotVec[0].times(speeds.omegaRadiansPerSecond));
-    Translation2d backRightVec = baseXVec[1].times(speeds.vxMetersPerSecond)
-        .plus(baseYVec[1].times(speeds.vyMetersPerSecond)).plus(baseRotVec[1].times(speeds.omegaRadiansPerSecond));
+    SwerveModuleState[] states = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
 
-    SwerveModuleState[] desiredStates = new SwerveModuleState[] {
-        new SwerveModuleState(frontLeftVec.getNorm(), frontLeftVec.getAngle()),
-        new SwerveModuleState(backRightVec.getNorm(), backRightVec.getAngle())
-    };
-    Double maxVel = Math.max(desiredStates[0].speedMetersPerSecond, desiredStates[1].speedMetersPerSecond);
-
-    for (int i = 0; i < desiredStates.length; i++) {
-      SwerveModuleState state = desiredStates[i];
-
-      if (maxVel > DriveConstants.kMaxSpeedMetersPerSecond) {
-        state.speedMetersPerSecond /= maxVel;
-      }
-
-      if (state.speedMetersPerSecond <= 0.05) {
-        state.speedMetersPerSecond = 0;
-        state.angle = prevAngle[i];
-      }
-
-      prevAngle[i] = state.angle;
-      modules[i].runState(state);
+    for (int i = 0; i < 4; i++) {
+      states[i].speedMetersPerSecond *= DriveConstants.kMaxSpeedMetersPerSecond;
     }
 
-    Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] { desiredStates[0], new SwerveModuleState(),
-        new SwerveModuleState(), desiredStates[1] });
+    Logger.recordOutput("SwerveStates/Setpoints", states);
+
+    for (int i = 0; i < 4; i++) {
+      modules[i].runState(states[i]);
+    }
 
     // TODO: Fix this, we shoudln't need this line with @AutoLogOutput
     Logger.recordOutput("SwerveStates/Measured", getStates());
@@ -78,9 +58,9 @@ public class Drivetrain extends SubsystemBase {
   private SwerveModuleState[] getStates() {
     return new SwerveModuleState[] {
         modules[0].getState(),
-        new SwerveModuleState(),
-        new SwerveModuleState(),
-        modules[1].getState()
+        modules[1].getState(),
+        modules[2].getState(),
+        modules[3].getState()
     };
   }
 }

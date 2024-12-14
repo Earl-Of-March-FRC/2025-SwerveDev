@@ -20,10 +20,14 @@ public class RobotContainer {
     if (RobotBase.isReal()) {
       driveSub = new Drivetrain(
           new ModuleIOMAXSwerve(0),
+          new ModuleIOMAXSwerve(1),
+          new ModuleIOMAXSwerve(2),
           new ModuleIOMAXSwerve(3)
       );
     } else {
       driveSub = new Drivetrain(
+          new ModuleIOSim(),
+          new ModuleIOSim(),
           new ModuleIOSim(),
           new ModuleIOSim()
       );

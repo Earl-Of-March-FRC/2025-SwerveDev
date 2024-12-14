@@ -29,6 +29,14 @@ public class ModuleIOMAXSwerve implements ModuleIO {
                 driveSparkMax = new CANSparkMax(DriveConstants.kFrontLeftDriveCanId, MotorType.kBrushless);
                 turnSparkMax = new CANSparkMax(DriveConstants.kFrontLeftTurningCanId, MotorType.kBrushless);
                 break;
+            case 1:
+                driveSparkMax = new CANSparkMax(DriveConstants.kFrontRightDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new CANSparkMax(DriveConstants.kFrontRightTurningCanId, MotorType.kBrushless);
+                break;
+            case 2:
+                driveSparkMax = new CANSparkMax(DriveConstants.kBackLeftDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new CANSparkMax(DriveConstants.kBackLeftTurningCanId, MotorType.kBrushless);
+                break;
             case 3:
                 driveSparkMax = new CANSparkMax(DriveConstants.kBackRightDriveCanId, MotorType.kBrushless);
                 turnSparkMax = new CANSparkMax(DriveConstants.kBackRightTurningCanId, MotorType.kBrushless);
