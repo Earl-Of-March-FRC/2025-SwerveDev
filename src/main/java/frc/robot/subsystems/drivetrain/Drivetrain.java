@@ -69,15 +69,18 @@ public class Drivetrain extends SubsystemBase {
 
     Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] { desiredStates[0], new SwerveModuleState(),
         new SwerveModuleState(), desiredStates[1] });
+
+    // TODO: Fix this, we shoudln't need this line with @AutoLogOutput
+    Logger.recordOutput("SwerveStates/Measured", getStates());
   }
 
   @AutoLogOutput(key = "SwerveStates/Measured")
   private SwerveModuleState[] getStates() {
-    SwerveModuleState[] states = new SwerveModuleState[4];
-    states[0] = modules[0].getState();
-    states[1] = new SwerveModuleState();
-    states[2] = new SwerveModuleState();
-    states[3] = modules[1].getState();
-    return states;
+    return new SwerveModuleState[] {
+        modules[0].getState(),
+        new SwerveModuleState(),
+        new SwerveModuleState(),
+        modules[1].getState()
+    };
   }
 }
