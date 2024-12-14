@@ -79,8 +79,9 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void runVelocity(ChassisSpeeds speeds) {
+    Rotation2d compensatedAngle = gyroInputs.angle.plus(new Rotation2d(gyroInputs.rate*0.05));
     ChassisSpeeds fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-      speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, gyroInputs.angle
+      speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, compensatedAngle
     );
     Logger.recordOutput("Drive/ChassisSpeeds/Setpoint", fieldOrientedSpeeds);
 
