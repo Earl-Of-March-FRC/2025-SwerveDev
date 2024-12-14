@@ -20,14 +20,21 @@ public class ModuleIOSim implements ModuleIO {
     private final PIDController turnController;
 
     public ModuleIOSim() {
-        drivePID = new PIDController(ModuleConstants.kDrivingP*2, ModuleConstants.kDrivingI, ModuleConstants.kDrivingD);
+        drivePID = new PIDController(ModuleConstants.kDrivingPSim.get(), ModuleConstants.kDrivingISim.get(), ModuleConstants.kDrivingDSim.get());
         driveFeedforward = new SimpleMotorFeedforward(0.0, 0.1);
-        turnController = new PIDController(ModuleConstants.kTurningP*8, ModuleConstants.kTurningI, ModuleConstants.kTurningD);
+        turnController = new PIDController(ModuleConstants.kTurningPSim.get(), ModuleConstants.kTurningISim.get(), ModuleConstants.kTurningDSim.get());
         turnController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     @Override
     public void updateInputs(ModuleIOInputs inputs) {
+        drivePID.setP(ModuleConstants.kDrivingPSim.get());
+        drivePID.setI(ModuleConstants.kDrivingISim.get());
+        drivePID.setD(ModuleConstants.kDrivingDSim.get());
+        turnController.setP(ModuleConstants.kTurningPSim.get());
+        turnController.setI(ModuleConstants.kTurningISim.get());
+        turnController.setD(ModuleConstants.kTurningDSim.get());
+
         driveSim.update(LOOP_PERIOD_SECS);
         turnSim.update(LOOP_PERIOD_SECS);
 

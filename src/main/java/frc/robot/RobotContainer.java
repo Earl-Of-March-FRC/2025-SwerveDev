@@ -85,14 +85,14 @@ public class RobotContainer {
         new Translation2d(5.406, 4.178),
         new Translation2d(10.094, 1.986)
       ),
-      new Pose2d(15.31, 0.914, new Rotation2d(2.067)),
+      new Pose2d(15.31, 0.914, new Rotation2d()),
       trajectoryConfig
     );
 
-    PIDController xController = new PIDController(AutoConstants.kPXController, 0, 0);
-    PIDController yController = new PIDController(AutoConstants.kPYController, 0, 0);
+    PIDController xController = new PIDController(AutoConstants.kPXController, AutoConstants.kIXController, AutoConstants.kDXController);
+    PIDController yController = new PIDController(AutoConstants.kPYController, AutoConstants.kIYController, AutoConstants.kDYController);
     ProfiledPIDController thetaController = new ProfiledPIDController(
-      AutoConstants.kPThetaController, 0, 0,
+      AutoConstants.kPThetaController, AutoConstants.kIThetaController, AutoConstants.kDThetaController,
       AutoConstants.kThetaControllerConstraints
     );
     thetaController.enableContinuousInput(-Math.PI, Math.PI);

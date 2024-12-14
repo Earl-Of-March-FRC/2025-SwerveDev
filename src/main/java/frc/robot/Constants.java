@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import frc.robot.util.TunableNumber;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -115,12 +116,22 @@ public final class Constants {
     public static final double kDrivingMinOutput = -1;
     public static final double kDrivingMaxOutput = 1;
 
+    public static final TunableNumber kDrivingPSim = new TunableNumber("ModuleConstants/kDrivingPSim", 0.08);
+    public static final TunableNumber kDrivingISim = new TunableNumber("ModuleConstants/kDrivingISim", 0);
+    public static final TunableNumber kDrivingDSim = new TunableNumber("ModuleConstants/kDrivingDSim", 0);
+    public static final double kDrivingFFSim = 1 / kDriveWheelFreeSpeedRps;
+
     public static final double kTurningP = 1;
     public static final double kTurningI = 0;
     public static final double kTurningD = 0;
     public static final double kTurningFF = 0;
     public static final double kTurningMinOutput = -1;
     public static final double kTurningMaxOutput = 1;
+
+    public static final TunableNumber kTurningPSim = new TunableNumber("ModuleConstants/kTurningPSim", 8);
+    public static final TunableNumber kTurningISim = new TunableNumber("ModuleConstants/kTurningISim", 0);
+    public static final TunableNumber kTurningDSim = new TunableNumber("ModuleConstants/kTurningDSim", 0);
+    public static final double kTurningFFSim = 0;
 
     public static final IdleMode kDrivingMotorIdleMode = IdleMode.kBrake;
     public static final IdleMode kTurningMotorIdleMode = IdleMode.kBrake;
@@ -144,8 +155,16 @@ public final class Constants {
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
     public static final double kPXController = 1;
-    public static final double kPYController = 1;
+    public static final double kIXController = 1;
+    public static final double kDXController = 0.1;
+
+    public static final double kPYController = kPXController;
+    public static final double kIYController = kIXController;
+    public static final double kDYController = kDXController;
+
     public static final double kPThetaController = 1;
+    public static final double kIThetaController = 0;
+    public static final double kDThetaController = 0;
 
     // Constraint for the motion profiled robot angle controller
     public static final TrapezoidProfile.Constraints kThetaControllerConstraints = new TrapezoidProfile.Constraints(
