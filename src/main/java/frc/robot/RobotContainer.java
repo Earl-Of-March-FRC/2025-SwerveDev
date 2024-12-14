@@ -1,30 +1,34 @@
 package frc.robot;
 
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.SwerveDriveCmd;
-import frc.robot.subsystems.DriveTrainSubsystem;
+import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.ModuleIOMAXSwerve;
 
 public class RobotContainer {
 
-  final DriveTrainSubsystem driveSubsystem = new DriveTrainSubsystem();
+  final Drivetrain driveSub;
 
   public final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
   public RobotContainer() {
+    driveSub = new Drivetrain(
+        new ModuleIOMAXSwerve(0),
+        new ModuleIOMAXSwerve(3));
 
-    driveSubsystem.setDefaultCommand(
+    driveSub.setDefaultCommand(
         new SwerveDriveCmd(
-            driveSubsystem,
-            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerYAxis), OIConstants.kDriveDeadband),
-            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerXAxis), OIConstants.kDriveDeadband),
-            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerRotAxis), OIConstants.kDriveDeadband)
-        )
-    );            
-    
+            driveSub,
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerYAxis),
+                OIConstants.kDriveDeadband),
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerXAxis),
+                OIConstants.kDriveDeadband),
+            () -> MathUtil.applyDeadband(-controller.getRawAxis(OIConstants.kDriverControllerRotAxis),
+                OIConstants.kDriveDeadband)));
+
     configureBindings();
   }
 
@@ -32,15 +36,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    // switch(cycle){
-    //   case 1:
-    //     new Leave(driveSubsystem);
-    //   case 2:
-    //     new ScoreFloorLeave(armMotors, driveSubsystem, claw);
-    //   default:
-    //     break;
-    // }
-    // return null;
     return null;
   }
 }

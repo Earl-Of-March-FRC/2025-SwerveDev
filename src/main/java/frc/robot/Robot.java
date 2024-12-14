@@ -9,10 +9,6 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends LoggedRobot {
 
-  private RobotContainer m_robotContainer;
-
-  // SendableChooser<Command> auto = new SendableChooser<Command>();
-
   @Override
   public void robotInit() {
     Logger.recordMetadata("ProjectName", "2025-SwerveDev");
@@ -26,27 +22,7 @@ public class Robot extends LoggedRobot {
 
     Logger.start();
 
-    // CameraServer.startAutomaticCapture();
-    m_robotContainer = new RobotContainer();
-
-    // auto.setDefaultOption("ScoreTopLeaveFar", new ScoreTopLeaveFar(
-    //   m_robotContainer.driveSubsystem,
-    //   m_robotContainer.armMotors,
-    //   m_robotContainer.claw, 35, 80));
-
-    // auto.addOption("ScoreTopBalance", new ScoreTopBalance(
-    //   m_robotContainer.driveSubsystem,
-    //   m_robotContainer.armMotors,
-    //   m_robotContainer.claw,
-    //   35,
-    //   80));
-    
-    // // Starts recording to data log
-    // DataLogManager.start();
-
-    // // Record both DS control and joystick data
-    // DriverStation.startDataLog(DataLogManager.getLog());
-
+    new RobotContainer();
   }
 
   @Override
@@ -55,26 +31,23 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+  }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+  }
 
   @Override
   public void autonomousInit() {
   }
 
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+  }
 
   @Override
   public void teleopInit() {
-
-    // m_robotContainer.armMotors.resetEncoders();
-    // m_robotContainer.driveSubsystem.resetEncoders();
-    // m_robotContainer.driveSubsystem.resetGyro();
-    // m_robotContainer.driveSubsystem.calibrateGyro();
-
   }
 
   @Override
@@ -83,20 +56,18 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void testInit() {
-    // m_robotContainer.armMotors.resetEncoders();
-    // m_robotContainer.driveSubsystem.resetEncoders();
-    // m_robotContainer.driveSubsystem.resetGyro();
-    // m_robotContainer.driveSubsystem.calibrateGyro();
-
     CommandScheduler.getInstance().cancelAll();
   }
 
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+  }
 
   @Override
-  public void simulationInit() {}
+  public void simulationInit() {
+  }
 
   @Override
-  public void simulationPeriodic() {}
+  public void simulationPeriodic() {
+  }
 }
