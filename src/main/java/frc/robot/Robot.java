@@ -1,11 +1,13 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
+
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
   private RobotContainer m_robotContainer;
 
@@ -13,6 +15,17 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+    Logger.recordMetadata("ProjectName", "2025-SwerveDev");
+
+    if (isReal()) {
+      Logger.addDataReceiver(new WPILOGWriter());
+      Logger.addDataReceiver(new NT4Publisher());
+    } else {
+      Logger.addDataReceiver(new NT4Publisher());
+    }
+
+    Logger.start();
+
     // CameraServer.startAutomaticCapture();
     m_robotContainer = new RobotContainer();
 
@@ -27,12 +40,12 @@ public class Robot extends TimedRobot {
     //   m_robotContainer.claw,
     //   35,
     //   80));
+    
+    // // Starts recording to data log
+    // DataLogManager.start();
 
-    // Starts recording to data log
-    DataLogManager.start();
-
-    // Record both DS control and joystick data
-    DriverStation.startDataLog(DataLogManager.getLog());
+    // // Record both DS control and joystick data
+    // DriverStation.startDataLog(DataLogManager.getLog());
 
   }
 
