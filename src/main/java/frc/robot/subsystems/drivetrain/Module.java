@@ -3,6 +3,7 @@ package frc.robot.subsystems.drivetrain;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class Module {
@@ -38,15 +39,15 @@ public class Module {
         return inputs.position.angle.plus(new Rotation2d(chassisAngularOffset));
     }
 
-    public double getPosition() {
-        return inputs.position.distanceMeters;
-    }
-
     public double getSpeed() {
         return inputs.state.speedMetersPerSecond;
     }
 
     public SwerveModuleState getState() {
         return inputs.state;
+    }
+
+    public SwerveModulePosition getPosition() {
+        return inputs.position;
     }
 }

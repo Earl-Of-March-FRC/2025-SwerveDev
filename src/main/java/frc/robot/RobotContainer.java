@@ -7,29 +7,37 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.SwerveDriveCmd;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.GyroIO;
+import frc.robot.subsystems.drivetrain.GyroIOADXRS450;
+import frc.robot.subsystems.drivetrain.GyroIOSim;
 import frc.robot.subsystems.drivetrain.ModuleIOMAXSwerve;
 import frc.robot.subsystems.drivetrain.ModuleIOSim;
 
 public class RobotContainer {
 
   final Drivetrain driveSub;
+  final GyroIO gyroIO;
 
   public final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
 
   public RobotContainer() {
     if (RobotBase.isReal()) {
+      gyroIO = new GyroIOADXRS450();
       driveSub = new Drivetrain(
           new ModuleIOMAXSwerve(0),
           new ModuleIOMAXSwerve(1),
           new ModuleIOMAXSwerve(2),
-          new ModuleIOMAXSwerve(3)
+          new ModuleIOMAXSwerve(3),
+          gyroIO
       );
     } else {
+      gyroIO = new GyroIOSim();
       driveSub = new Drivetrain(
           new ModuleIOSim(),
           new ModuleIOSim(),
           new ModuleIOSim(),
-          new ModuleIOSim()
+          new ModuleIOSim(),
+          gyroIO
       );
     }
 

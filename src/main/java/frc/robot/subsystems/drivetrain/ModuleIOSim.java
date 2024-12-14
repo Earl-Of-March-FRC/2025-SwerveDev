@@ -20,9 +20,9 @@ public class ModuleIOSim implements ModuleIO {
     private final PIDController turnController;
 
     public ModuleIOSim() {
-        drivePID = new PIDController(ModuleConstants.kDrivingP, ModuleConstants.kDrivingI, ModuleConstants.kDrivingD);
+        drivePID = new PIDController(ModuleConstants.kDrivingP*2, ModuleConstants.kDrivingI, ModuleConstants.kDrivingD);
         driveFeedforward = new SimpleMotorFeedforward(0.0, 0.1);
-        turnController = new PIDController(ModuleConstants.kTurningP*5, ModuleConstants.kTurningI, ModuleConstants.kTurningD);
+        turnController = new PIDController(ModuleConstants.kTurningP*8, ModuleConstants.kTurningI, ModuleConstants.kTurningD);
         turnController.enableContinuousInput(0, Math.PI * 2);
     }
 
