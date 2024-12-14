@@ -13,11 +13,11 @@ public class GyroIOSim implements GyroIO {
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
+        angle += rate * LOOP_PERIOD_SECS;
+
         inputs.connected = true;
         inputs.angle = new Rotation2d(angle);
         inputs.rate = rate;
-
-        angle += rate * LOOP_PERIOD_SECS;
     }
 
     @Override
