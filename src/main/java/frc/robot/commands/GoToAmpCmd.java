@@ -13,7 +13,13 @@ import frc.robot.Constants.AutoConstants;
 
 public class GoToAmpCmd extends SequentialCommandGroup {
   public GoToAmpCmd() {
-    PathPlannerPath intoAmpPath = PathPlannerPath.fromPathFile("Into Amp");
+    PathPlannerPath intoAmpPath;
+    try {
+      intoAmpPath = PathPlannerPath.fromPathFile("Into Amp");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return;
+    }
     PathConstraints pathfindingConstraints = new PathConstraints(
       AutoConstants.kMaxSpeedMetersPerSecond, AutoConstants.kMaxAccelerationMetersPerSecondSquared,
       AutoConstants.kMaxAngularSpeedRadiansPerSecond, AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared

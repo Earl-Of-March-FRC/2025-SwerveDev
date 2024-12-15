@@ -14,7 +14,13 @@ import frc.robot.Constants.AutoConstants;
 public class GoToSpeakerCCmd extends SequentialCommandGroup {
 
   public GoToSpeakerCCmd() {
-    PathPlannerPath intoSpeakerCPath = PathPlannerPath.fromPathFile("Into Speaker Center");
+    PathPlannerPath intoSpeakerCPath;
+    try {
+      intoSpeakerCPath = PathPlannerPath.fromPathFile("Into Speaker Center");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return;
+    }
     PathConstraints pathfindingConstraints = new PathConstraints(
       AutoConstants.kMaxSpeedMetersPerSecond, AutoConstants.kMaxAccelerationMetersPerSecondSquared,
       AutoConstants.kMaxAngularSpeedRadiansPerSecond, AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared

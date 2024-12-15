@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import com.revrobotics.CANSparkBase.IdleMode;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -157,7 +157,7 @@ public final class Constants {
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
-    public static final double kPXController = 5;
+    public static final double kPXController = 1;
     public static final double kIXController = 2;
     public static final double kDXController = 0.1;
 
@@ -165,7 +165,7 @@ public final class Constants {
     public static final double kIYController = kIXController;
     public static final double kDYController = kDXController;
 
-    public static final double kPThetaController = 5;
+    public static final double kPThetaController = 3;
     public static final double kIThetaController = 0;
     public static final double kDThetaController = 0;
 

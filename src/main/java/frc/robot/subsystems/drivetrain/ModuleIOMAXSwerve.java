@@ -1,11 +1,14 @@
 package frc.robot.subsystems.drivetrain;
 
 import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkPIDController;
-import com.revrobotics.CANSparkLowLevel.MotorType;
-import com.revrobotics.SparkAbsoluteEncoder.Type;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -14,74 +17,89 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.ModuleConstants;
 
 public class ModuleIOMAXSwerve implements ModuleIO {
-    private final CANSparkMax driveSparkMax;
-    private final CANSparkMax turnSparkMax;
+    private final SparkMax driveSparkMax;
+    private final SparkMax turnSparkMax;
 
     private final RelativeEncoder driveEncoder;
     private final AbsoluteEncoder turnEncoder;
 
-    private final SparkPIDController drivePIDController;
-    private final SparkPIDController turnPIDController;
+    private final SparkClosedLoopController drivePIDController;
+    private final SparkClosedLoopController turnPIDController;
 
     public ModuleIOMAXSwerve(int index) {
         switch (index) {
             case 0:
-                driveSparkMax = new CANSparkMax(DriveConstants.kFrontLeftDriveCanId, MotorType.kBrushless);
-                turnSparkMax = new CANSparkMax(DriveConstants.kFrontLeftTurningCanId, MotorType.kBrushless);
+                driveSparkMax = new SparkMax(DriveConstants.kFrontLeftDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new SparkMax(DriveConstants.kFrontLeftTurningCanId, MotorType.kBrushless);
                 break;
             case 1:
-                driveSparkMax = new CANSparkMax(DriveConstants.kFrontRightDriveCanId, MotorType.kBrushless);
-                turnSparkMax = new CANSparkMax(DriveConstants.kFrontRightTurningCanId, MotorType.kBrushless);
+                driveSparkMax = new SparkMax(DriveConstants.kFrontRightDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new SparkMax(DriveConstants.kFrontRightTurningCanId, MotorType.kBrushless);
                 break;
             case 2:
-                driveSparkMax = new CANSparkMax(DriveConstants.kBackLeftDriveCanId, MotorType.kBrushless);
-                turnSparkMax = new CANSparkMax(DriveConstants.kBackLeftTurningCanId, MotorType.kBrushless);
+                driveSparkMax = new SparkMax(DriveConstants.kBackLeftDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new SparkMax(DriveConstants.kBackLeftTurningCanId, MotorType.kBrushless);
                 break;
             case 3:
-                driveSparkMax = new CANSparkMax(DriveConstants.kBackRightDriveCanId, MotorType.kBrushless);
-                turnSparkMax = new CANSparkMax(DriveConstants.kBackRightTurningCanId, MotorType.kBrushless);
+                driveSparkMax = new SparkMax(DriveConstants.kBackRightDriveCanId, MotorType.kBrushless);
+                turnSparkMax = new SparkMax(DriveConstants.kBackRightTurningCanId, MotorType.kBrushless);
                 break;
             default:
                 throw new RuntimeException("Invalid module index: " + index);
         }
 
-        driveSparkMax.restoreFactoryDefaults();
-        turnSparkMax.restoreFactoryDefaults();
+        SparkMaxConfig driveConfig = new SparkMaxConfig();
+        SparkMaxConfig turnConfig = new SparkMaxConfig();
+
+        driveConfig
+            .idleMode(ModuleConstants.kDrivingMotorIdleMode)
+            .smartCurrentLimit(ModuleConstants.kDrivingMotorCurrentLimit);
+        turnConfig
+            .idleMode(ModuleConstants.kTurningMotorIdleMode)
+            .smartCurrentLimit(ModuleConstants.kTurningMotorCurrentLimit);
+        driveConfig
+            .encoder
+            .positionConversionFactor(ModuleConstants.kDrivingEncoderPositionFactor)
+            .velocityConversionFactor(ModuleConstants.kDrivingEncoderVelocityFactor);
+        turnConfig
+            .encoder
+            .positionConversionFactor(ModuleConstants.kTurningEncoderPositionFactor)
+            .velocityConversionFactor(ModuleConstants.kTurningEncoderVelocityFactor)
+            .inverted(ModuleConstants.kTurningEncoderInverted);
+        driveConfig
+            .closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pidf(
+                ModuleConstants.kDrivingP,
+                ModuleConstants.kDrivingI,
+                ModuleConstants.kDrivingD,
+                ModuleConstants.kDrivingFF
+            )
+            .outputRange(ModuleConstants.kDrivingMinOutput, ModuleConstants.kDrivingMaxOutput);
+        turnConfig
+            .closedLoop
+            .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+            .pidf(
+                ModuleConstants.kTurningP,
+                ModuleConstants.kTurningI,
+                ModuleConstants.kTurningD,
+                ModuleConstants.kTurningFF
+            )
+            .outputRange(ModuleConstants.kTurningMinOutput, ModuleConstants.kTurningMaxOutput)
+            .positionWrappingEnabled(true)
+            .positionWrappingInputRange(ModuleConstants.kTurningEncoderPositionPIDMinInput, ModuleConstants.kTurningEncoderPositionPIDMaxInput);
 
         driveSparkMax.setCANTimeout(250);
         turnSparkMax.setCANTimeout(250);
 
         driveEncoder = driveSparkMax.getEncoder();
-        turnEncoder = turnSparkMax.getAbsoluteEncoder(Type.kDutyCycle);
-        drivePIDController = driveSparkMax.getPIDController();
-        turnPIDController = turnSparkMax.getPIDController();
-        drivePIDController.setFeedbackDevice(driveEncoder);
-        turnPIDController.setFeedbackDevice(turnEncoder);
+        turnEncoder = turnSparkMax.getAbsoluteEncoder();
+        
+        drivePIDController = driveSparkMax.getClosedLoopController();
+        turnPIDController = turnSparkMax.getClosedLoopController();
 
-        driveEncoder.setPositionConversionFactor(ModuleConstants.kDrivingEncoderPositionFactor);
-        driveEncoder.setVelocityConversionFactor(ModuleConstants.kDrivingEncoderVelocityFactor);
-        turnEncoder.setPositionConversionFactor(ModuleConstants.kTurningEncoderPositionFactor);
-        turnEncoder.setVelocityConversionFactor(ModuleConstants.kTurningEncoderVelocityFactor);
-
-        turnEncoder.setInverted(ModuleConstants.kTurningEncoderInverted);
-        turnPIDController.setPositionPIDWrappingEnabled(true);
-        turnPIDController.setPositionPIDWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput);
-        turnPIDController.setPositionPIDWrappingMaxInput(ModuleConstants.kTurningEncoderPositionPIDMaxInput);
-
-        drivePIDController.setP(ModuleConstants.kDrivingP);
-        drivePIDController.setI(ModuleConstants.kDrivingI);
-        drivePIDController.setD(ModuleConstants.kDrivingD);
-        drivePIDController.setFF(ModuleConstants.kDrivingFF);
-        drivePIDController.setOutputRange(ModuleConstants.kDrivingMinOutput, ModuleConstants.kDrivingMaxOutput);
-
-        turnPIDController.setP(ModuleConstants.kTurningP);
-        turnPIDController.setI(ModuleConstants.kTurningI);
-        turnPIDController.setD(ModuleConstants.kTurningD);
-        turnPIDController.setFF(ModuleConstants.kTurningFF);
-        turnPIDController.setOutputRange(ModuleConstants.kTurningMinOutput, ModuleConstants.kTurningMaxOutput);
-
-        driveSparkMax.burnFlash();
-        turnSparkMax.burnFlash();
+        driveSparkMax.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        turnSparkMax.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
@@ -93,8 +111,8 @@ public class ModuleIOMAXSwerve implements ModuleIO {
 
     @Override
     public void setState(SwerveModuleState state) {
-        drivePIDController.setReference(state.speedMetersPerSecond, CANSparkMax.ControlType.kVelocity);
-        turnPIDController.setReference(state.angle.getRadians(), CANSparkMax.ControlType.kPosition);
+        drivePIDController.setReference(state.speedMetersPerSecond, SparkMax.ControlType.kVelocity);
+        turnPIDController.setReference(state.angle.getRadians(), SparkMax.ControlType.kPosition);
     }
 
     @Override

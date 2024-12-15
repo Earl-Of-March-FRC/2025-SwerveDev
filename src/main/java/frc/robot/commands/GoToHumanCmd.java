@@ -13,7 +13,14 @@ import frc.robot.Constants.AutoConstants;
 
 public class GoToHumanCmd extends SequentialCommandGroup {
   public GoToHumanCmd() {
-    PathPlannerPath intoHumanPath = PathPlannerPath.fromPathFile("Into Human");
+    PathPlannerPath intoHumanPath;
+    try {
+      intoHumanPath = PathPlannerPath.fromPathFile("Into Human");
+    } catch (Exception e) {
+      e.printStackTrace();
+      return;
+    }
+
     PathConstraints pathfindingConstraints = new PathConstraints(
       AutoConstants.kMaxSpeedMetersPerSecond, AutoConstants.kMaxAccelerationMetersPerSecondSquared,
       AutoConstants.kMaxAngularSpeedRadiansPerSecond, AutoConstants.kMaxAngularSpeedRadiansPerSecondSquared

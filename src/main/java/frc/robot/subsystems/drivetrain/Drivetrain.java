@@ -6,9 +6,9 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.PIDConstants;
-import com.pathplanner.lib.util.ReplanningConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -48,18 +48,23 @@ public class Drivetrain extends SubsystemBase {
     modules[3] = new Module(brModuleIO, 3);
     this.gyroIO = gyroIO;
 
-    AutoBuilder.configureHolonomic(
+    RobotConfig config;
+    try {
+      config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to load robot config", e);
+    }
+
+    AutoBuilder.configure(
       this::getPose,
       this::resetOdometry,
       this::getRelativeChassisSpeeds, 
-      this::runVelocityRobotRelative,
-      new HolonomicPathFollowerConfig(
+      (speeds, feedforwards) -> runVelocityRobotRelative(speeds),
+      new PPHolonomicDriveController(
         new PIDConstants(AutoConstants.kPXController, AutoConstants.kIXController, AutoConstants.kDXController),
-        new PIDConstants(AutoConstants.kPThetaController, AutoConstants.kIThetaController, AutoConstants.kDThetaController),
-        AutoConstants.kMaxModuleSpeedMetersPerSecond,
-        DriveConstants.kDriveRadius,
-        new ReplanningConfig()
+        new PIDConstants(AutoConstants.kPThetaController, AutoConstants.kIThetaController, AutoConstants.kDThetaController)
       ),
+      config,
       () -> {
         Optional<Alliance> alliance = DriverStation.getAlliance();
         return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
@@ -110,13 +115,11 @@ public class Drivetrain extends SubsystemBase {
 
   public void runVelocity(ChassisSpeeds speeds, Boolean fieldRelative) {
     Rotation2d compensatedAngle = gyroInputs.angle.plus(new Rotation2d(gyroInputs.rate*0.05));
-    ChassisSpeeds fieldOrientedSpeeds = fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
-      speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, compensatedAngle
-    ) : speeds;
+    if (fieldRelative) speeds.toFieldRelativeSpeeds(compensatedAngle);
     
-    Logger.recordOutput("Drive/ChassisSpeeds/Setpoint", fieldOrientedSpeeds);
+    Logger.recordOutput("Drive/ChassisSpeeds/Setpoint", speeds);
 
-    SwerveModuleState[] states = DriveConstants.kDriveKinematics.toSwerveModuleStates(fieldOrientedSpeeds);
+    SwerveModuleState[] states = DriveConstants.kDriveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
 
     // for (int i = 0; i < 4; i++) {

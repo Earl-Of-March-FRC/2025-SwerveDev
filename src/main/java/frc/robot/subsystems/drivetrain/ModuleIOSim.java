@@ -6,14 +6,23 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.ModuleConstants;
 
 public class ModuleIOSim implements ModuleIO {
     private static final double LOOP_PERIOD_SECS = 0.02;
 
-    private final DCMotorSim driveSim = new DCMotorSim(DCMotor.getNEO(1), ModuleConstants.kDrivingMotorReduction, 0.025);
-    private final DCMotorSim turnSim = new DCMotorSim(DCMotor.getNeo550(1), ModuleConstants.kTurningMotorReduction, 0.004);
+    // private final DCMotorSim driveSim = new DCMotorSim(DCMotor.getNEO(1), ModuleConstants.kDrivingMotorReduction, 0.025);
+    // private final DCMotorSim turnSim = new DCMotorSim(DCMotor.getNeo550(1), ModuleConstants.kTurningMotorReduction, 0.004);
+
+    private final DCMotorSim driveSim = new DCMotorSim(
+        LinearSystemId.createDCMotorSystem(DCMotor.getNEO(1), 0.025, ModuleConstants.kDrivingMotorReduction),
+        DCMotor.getNEO(1));
+    private final DCMotorSim turnSim = new DCMotorSim(
+        LinearSystemId.createDCMotorSystem(DCMotor.getNEO(1), 0.004, ModuleConstants.kTurningMotorReduction),
+        DCMotor.getNeo550(1));
 
     private final PIDController drivePID;
     private final SimpleMotorFeedforward driveFeedforward;
@@ -50,7 +59,10 @@ public class ModuleIOSim implements ModuleIO {
 
     @Override
     public void setState(SwerveModuleState state) {
-        driveSim.setInputVoltage(driveFeedforward.calculate(state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2)) + drivePID.calculate(driveSim.getAngularVelocityRadPerSec(), state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2)));
+        driveSim.setInputVoltage(
+            driveFeedforward.calculate(Units.MetersPerSecond.of(state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2))).in(Units.Volts) + 
+            drivePID.calculate(driveSim.getAngularVelocityRadPerSec(), state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2))
+        );
         turnSim.setInputVoltage(turnController.calculate(turnSim.getAngularPositionRad(), state.angle.getRadians()));
     }
 }

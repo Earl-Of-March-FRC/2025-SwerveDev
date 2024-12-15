@@ -27,9 +27,8 @@ public class Module {
         SwerveModuleState correctedDesiredState = new SwerveModuleState();
         correctedDesiredState.speedMetersPerSecond = state.speedMetersPerSecond;
         correctedDesiredState.angle = state.angle.plus(Rotation2d.fromRadians(chassisAngularOffset));
-        correctedDesiredState = SwerveModuleState.optimize(correctedDesiredState,
-                getAngle());
-        correctedDesiredState.speedMetersPerSecond *= correctedDesiredState.angle.minus(getAngle()).getCos();
+        correctedDesiredState.optimize(getAngle());
+        correctedDesiredState.cosineScale(getAngle());
         
         io.setState(correctedDesiredState);
         return correctedDesiredState;

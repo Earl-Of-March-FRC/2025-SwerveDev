@@ -1,6 +1,5 @@
 package frc.robot;
 
-import org.littletonrobotics.conduit.schema.Joystick;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
