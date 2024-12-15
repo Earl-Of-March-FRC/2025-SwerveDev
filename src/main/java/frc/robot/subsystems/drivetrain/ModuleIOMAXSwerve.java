@@ -98,8 +98,8 @@ public class ModuleIOMAXSwerve implements ModuleIO {
         drivePIDController = driveSparkMax.getClosedLoopController();
         turnPIDController = turnSparkMax.getClosedLoopController();
 
-        driveSparkMax.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        turnSparkMax.configure(new SparkMaxConfig(), ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        driveSparkMax.configure(driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        turnSparkMax.configure(turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     @Override
