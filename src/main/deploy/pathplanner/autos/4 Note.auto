@@ -1,0 +1,79 @@
+{
+  "version": 1.0,
+  "startingPose": {
+    "position": {
+      "x": 0.6791350589724411,
+      "y": 4.515703639727107
+    },
+    "rotation": 118.13879099872484
+  },
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.5
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Speaker Right to Note Right"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Note Right to Speaker Center"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.5
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Speaker Center to Note Middle"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Note Middle to Speaker Center"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.5
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Speaker Center to Note Left"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "Note Left to Amp"
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 0.5
+          }
+        }
+      ]
+    }
+  },
+  "folder": null,
+  "choreoAuto": false
+}

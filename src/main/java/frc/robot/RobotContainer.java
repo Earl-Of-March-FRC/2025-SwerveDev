@@ -1,25 +1,20 @@
 package frc.robot;
 
-import java.util.List;
+import org.littletonrobotics.conduit.schema.Joystick;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
+import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
-import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants.DriveConstants;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.OIConstants;
+import frc.robot.commands.GoToAmpCmd;
+import frc.robot.commands.GoToHumanCmd;
+import frc.robot.commands.GoToSpeakerCCmd;
 import frc.robot.commands.SwerveDriveCmd;
 import frc.robot.subsystems.drivetrain.Drivetrain;
 import frc.robot.subsystems.drivetrain.GyroIO;
@@ -34,6 +29,7 @@ public class RobotContainer {
   final GyroIO gyroIO;
 
   public final XboxController controller = new XboxController(OIConstants.kDriverControllerPort);
+  private final LoggedDashboardChooser<Command> autoChooser;
 
   public RobotContainer() {
     if (RobotBase.isReal()) {
@@ -54,6 +50,9 @@ public class RobotContainer {
           gyroIO);
     }
 
+    autoChooser = new LoggedDashboardChooser<Command>("Auto Routine", AutoBuilder.buildAutoChooser());
+    SmartDashboard.putData("Auto Routine", autoChooser.getSendableChooser());
+
     driveSub.setDefaultCommand(
         new SwerveDriveCmd(
             driveSub,
@@ -68,46 +67,18 @@ public class RobotContainer {
   }
 
   private void configureBindings() {
+    new JoystickButton(controller, 2).whileTrue(
+      new GoToHumanCmd()
+    );
+    new JoystickButton(controller, 3).whileTrue(
+      new GoToSpeakerCCmd()
+    );
+    new JoystickButton(controller, 4).whileTrue(
+      new GoToAmpCmd()
+    );
   }
 
   public Command getAutonomousCommand() {
-    TrajectoryConfig trajectoryConfig = new TrajectoryConfig(
-        AutoConstants.kMaxSpeedMetersPerSecond,
-        AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-        .setKinematics(DriveConstants.kDriveKinematics);
-
-    Trajectory trajectory = TrajectoryGenerator.generateTrajectory(
-      new Pose2d(1.575, 7.022, new Rotation2d()),
-      List.of(
-        new Translation2d(5.406, 4.178),
-        new Translation2d(10.094, 1.986)
-      ),
-      new Pose2d(15.31, 0.914, new Rotation2d()),
-      trajectoryConfig
-    );
-
-    PIDController xController = new PIDController(AutoConstants.kPXController, AutoConstants.kIXController, AutoConstants.kDXController);
-    PIDController yController = new PIDController(AutoConstants.kPYController, AutoConstants.kIYController, AutoConstants.kDYController);
-    ProfiledPIDController thetaController = new ProfiledPIDController(
-      AutoConstants.kPThetaController, AutoConstants.kIThetaController, AutoConstants.kDThetaController,
-      AutoConstants.kThetaControllerConstraints
-    );
-    thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-    SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-      trajectory,
-      driveSub::getPose,
-      DriveConstants.kDriveKinematics,
-      xController,
-      yController,
-      thetaController,
-      driveSub::runModuleStates,
-      driveSub
-    );
-
-    return new SequentialCommandGroup(
-      new InstantCommand(() -> driveSub.resetOdometry(new Rotation2d(0), trajectory.getInitialPose())),
-      swerveControllerCommand
-    );
+    return autoChooser.get();
   }
 }

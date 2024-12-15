@@ -39,6 +39,8 @@ public final class Constants {
     public static final double kTrackWidth = Units.inchesToMeters(26.5);
     // Distance between centers of right and left wheels on robot
     public static final double kWheelBase = Units.inchesToMeters(26.5);
+    // Distance from robot center to wheel center
+    public static final double kDriveRadius = Math.sqrt(kTrackWidth * kTrackWidth + kWheelBase * kWheelBase) / 2;
     // Distance between front and back wheels on robot
     public static final SwerveDriveKinematics kDriveKinematics = new SwerveDriveKinematics(
         new Translation2d(kWheelBase / 2, kTrackWidth / 2),
@@ -149,20 +151,21 @@ public final class Constants {
   }
 
   public static final class AutoConstants {
+    public static final double kMaxModuleSpeedMetersPerSecond = 4.8;
     public static final double kMaxSpeedMetersPerSecond = 3;
     public static final double kMaxAccelerationMetersPerSecondSquared = 3;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
-    public static final double kPXController = 1;
-    public static final double kIXController = 1;
+    public static final double kPXController = 5;
+    public static final double kIXController = 2;
     public static final double kDXController = 0.1;
 
     public static final double kPYController = kPXController;
     public static final double kIYController = kIXController;
     public static final double kDYController = kDXController;
 
-    public static final double kPThetaController = 1;
+    public static final double kPThetaController = 5;
     public static final double kIThetaController = 0;
     public static final double kDThetaController = 0;
 

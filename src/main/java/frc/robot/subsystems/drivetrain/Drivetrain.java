@@ -1,17 +1,27 @@
 package frc.robot.subsystems.drivetrain;
 
+import java.util.Optional;
+
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 
 public class Drivetrain extends SubsystemBase {
@@ -37,6 +47,25 @@ public class Drivetrain extends SubsystemBase {
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
     this.gyroIO = gyroIO;
+
+    AutoBuilder.configureHolonomic(
+      this::getPose,
+      this::resetOdometry,
+      this::getRelativeChassisSpeeds, 
+      this::runVelocityRobotRelative,
+      new HolonomicPathFollowerConfig(
+        new PIDConstants(AutoConstants.kPXController, AutoConstants.kIXController, AutoConstants.kDXController),
+        new PIDConstants(AutoConstants.kPThetaController, AutoConstants.kIThetaController, AutoConstants.kDThetaController),
+        AutoConstants.kMaxModuleSpeedMetersPerSecond,
+        DriveConstants.kDriveRadius,
+        new ReplanningConfig()
+      ),
+      () -> {
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
+      },
+      this
+    );
   }
 
   @Override
@@ -48,10 +77,7 @@ public class Drivetrain extends SubsystemBase {
       module.periodic();
     }
 
-    ChassisSpeeds measuredChassisSpeeds = DriveConstants.kDriveKinematics.toChassisSpeeds(
-      modules[0].getState(), modules[1].getState(), modules[2].getState(), modules[3].getState()
-    );
-
+    ChassisSpeeds measuredChassisSpeeds = getRelativeChassisSpeeds();
     // Simulation only
     if (gyroIO instanceof GyroIOSim) {
       ((GyroIOSim) gyroIO).updateAngularVelocity(measuredChassisSpeeds.omegaRadiansPerSecond);
@@ -75,17 +101,27 @@ public class Drivetrain extends SubsystemBase {
   }
 
   public void runVelocity(ChassisSpeeds speeds) {
+    runVelocity(speeds, true);
+  }
+
+  public void runVelocityRobotRelative(ChassisSpeeds speeds) {
+    runVelocity(speeds, false);
+  }
+
+  public void runVelocity(ChassisSpeeds speeds, Boolean fieldRelative) {
     Rotation2d compensatedAngle = gyroInputs.angle.plus(new Rotation2d(gyroInputs.rate*0.05));
-    ChassisSpeeds fieldOrientedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+    ChassisSpeeds fieldOrientedSpeeds = fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(
       speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, compensatedAngle
-    );
+    ) : speeds;
+    
     Logger.recordOutput("Drive/ChassisSpeeds/Setpoint", fieldOrientedSpeeds);
 
     SwerveModuleState[] states = DriveConstants.kDriveKinematics.toSwerveModuleStates(fieldOrientedSpeeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(states, DriveConstants.kMaxSpeedMetersPerSecond);
 
-    for (int i = 0; i < 4; i++) {
-      states[i].speedMetersPerSecond *= DriveConstants.kMaxSpeedMetersPerSecond;
-    }
+    // for (int i = 0; i < 4; i++) {
+    //   states[i].speedMetersPerSecond *= DriveConstants.kMaxSpeedMetersPerSecond;
+    // }
 
     Logger.recordOutput("SwerveStates/Setpoints", states);
 
@@ -131,11 +167,21 @@ public class Drivetrain extends SubsystemBase {
     odometry.resetPosition(rotation, modulePositions, pose);
   }
 
+  public void resetOdometry(Pose2d pose) {
+    resetOdometry(new Rotation2d(), getModulePositions(), pose);
+  }
+
   public void resetOdometry(Rotation2d rotation, Pose2d pose) {
     resetOdometry(rotation, getModulePositions(), pose);
   }
 
   public void resetOdometry() {
     resetOdometry(new Rotation2d(0), getModulePositions(), new Pose2d(new Translation2d(0, 0), new Rotation2d(0)));
+  }
+
+  public ChassisSpeeds getRelativeChassisSpeeds() {
+    return DriveConstants.kDriveKinematics.toChassisSpeeds(
+      modules[0].getState(), modules[1].getState(), modules[2].getState(), modules[3].getState()
+    );
   }
 }
