@@ -1,38 +1,37 @@
 package frc.robot.subsystems.drivetrain;
 
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
+import org.ironmaple.simulation.motorsims.SimulatedMotorController;
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.ModuleConstants;
 
 public class ModuleIOSim implements ModuleIO {
-    private static final double LOOP_PERIOD_SECS = 0.02;
-
-    // private final DCMotorSim driveSim = new DCMotorSim(DCMotor.getNEO(1), ModuleConstants.kDrivingMotorReduction, 0.025);
-    // private final DCMotorSim turnSim = new DCMotorSim(DCMotor.getNeo550(1), ModuleConstants.kTurningMotorReduction, 0.004);
-
-    private final DCMotorSim driveSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(DCMotor.getNEO(1), 0.025, ModuleConstants.kDrivingMotorReduction),
-        DCMotor.getNEO(1));
-    private final DCMotorSim turnSim = new DCMotorSim(
-        LinearSystemId.createDCMotorSystem(DCMotor.getNEO(1), 0.004, ModuleConstants.kTurningMotorReduction),
-        DCMotor.getNeo550(1));
+    private final SwerveModuleSimulation moduleSimulation;
+    private final SimulatedMotorController.GenericMotorController driveMotor;
+    private final SimulatedMotorController.GenericMotorController turnMotor;
 
     private final PIDController drivePID;
     private final SimpleMotorFeedforward driveFeedforward;
     private final PIDController turnController;
 
-    public ModuleIOSim() {
+    public ModuleIOSim(SwerveModuleSimulation moduleSim) {
+        moduleSimulation = moduleSim;
+
         drivePID = new PIDController(ModuleConstants.kDrivingPSim.get(), ModuleConstants.kDrivingISim.get(), ModuleConstants.kDrivingDSim.get());
         driveFeedforward = new SimpleMotorFeedforward(0.0, 0.1);
         turnController = new PIDController(ModuleConstants.kTurningPSim.get(), ModuleConstants.kTurningISim.get(), ModuleConstants.kTurningDSim.get());
         turnController.enableContinuousInput(-Math.PI, Math.PI);
+        
+        driveMotor = moduleSimulation.useGenericMotorControllerForDrive()
+                .withCurrentLimit(Units.Amps.of(ModuleConstants.kDrivingMotorCurrentLimit));
+        turnMotor = moduleSimulation.useGenericControllerForSteer()
+                .withCurrentLimit(Units.Amps.of(ModuleConstants.kTurningMotorCurrentLimit));
     }
 
     @Override
@@ -44,26 +43,28 @@ public class ModuleIOSim implements ModuleIO {
         turnController.setI(ModuleConstants.kTurningISim.get());
         turnController.setD(ModuleConstants.kTurningDSim.get());
 
-        driveSim.update(LOOP_PERIOD_SECS);
-        turnSim.update(LOOP_PERIOD_SECS);
-
         inputs.position = new SwerveModulePosition(
-            driveSim.getAngularPositionRad() * ModuleConstants.kWheelDiameterMeters / 2,
-            new Rotation2d(turnSim.getAngularPositionRad())
+            moduleSimulation.getDriveWheelFinalPosition().in(Units.Radians) * moduleSimulation.WHEEL_RADIUS.in(Units.Meters),
+            moduleSimulation.getSteerAbsoluteFacing()
         );
         inputs.state = new SwerveModuleState(
-            driveSim.getAngularVelocityRadPerSec() * ModuleConstants.kWheelDiameterMeters / 2,
-            new Rotation2d(turnSim.getAngularPositionRad())
+            moduleSimulation.getDriveWheelFinalSpeed().in(Units.RadiansPerSecond) * moduleSimulation.WHEEL_RADIUS.in(Units.Meters),
+            moduleSimulation.getSteerAbsoluteFacing()
         );
     }
 
     @Override
     public void setState(SwerveModuleState state) {
-        driveSim.setInputVoltage(
-            driveFeedforward.calculate(Units.MetersPerSecond.of(state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2))).in(Units.Volts) + 
-            drivePID.calculate(driveSim.getAngularVelocityRadPerSec(), state.speedMetersPerSecond / (ModuleConstants.kWheelDiameterMeters / 2))
+        Logger.recordOutput("Test", driveFeedforward.calculate(
+            Units.RadiansPerSecond.of(state.speedMetersPerSecond * moduleSimulation.DRIVE_GEAR_RATIO / moduleSimulation.WHEEL_RADIUS.in(Units.Meters))
+        ));
+        driveMotor.requestVoltage(
+            driveFeedforward.calculate(
+                Units.RadiansPerSecond.of(state.speedMetersPerSecond / moduleSimulation.WHEEL_RADIUS.in(Units.Meters))
+            ).plus(
+                Units.Volts.of(drivePID.calculate(moduleSimulation.getDriveWheelFinalSpeed().in(Units.RadiansPerSecond), state.speedMetersPerSecond / moduleSimulation.WHEEL_RADIUS.in(Units.Meters)))
+            )
         );
-        turnSim.setInputVoltage(turnController.calculate(turnSim.getAngularPositionRad(), state.angle.getRadians()));
+        turnMotor.requestVoltage(Units.Volts.of(turnController.calculate(moduleSimulation.getSteerAbsoluteFacing().getRadians(), state.angle.getRadians())));
     }
 }
-  

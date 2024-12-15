@@ -5,6 +5,19 @@
       "/SmartDashboard/Auto Routine": "String Chooser"
     }
   },
+  "NetworkTables": {
+    "transitory": {
+      "SmartDashboard": {
+        "TunableNumbers": {
+          "ModuleConstants": {
+            "open": true
+          },
+          "open": true
+        },
+        "open": true
+      }
+    }
+  },
   "NetworkTables Info": {
     "visible": true
   }

@@ -1,15 +1,26 @@
 package frc.robot;
 
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.GyroSimulation;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.GoToAmpCmd;
 import frc.robot.commands.GoToHumanCmd;
@@ -40,13 +51,34 @@ public class RobotContainer {
           new ModuleIOMAXSwerve(3),
           gyroIO);
     } else {
-      gyroIO = new GyroIOSim();
+      DriveTrainSimulationConfig driveTrainSimulationConfig = DriveTrainSimulationConfig.Default()
+          .withGyro(COTS.ofGenericGyro())
+          .withSwerveModule(COTS.ofMAXSwerve(
+            DCMotor.getNEO(1), 
+            DCMotor.getNeo550(1),
+            COTS.WHEELS.COLSONS.cof, 
+            2))
+          .withTrackLengthTrackWidth(
+            Units.Meters.of(DriveConstants.kWheelBase),
+            Units.Meters.of(DriveConstants.kTrackWidth)
+          )
+          .withBumperSize(Units.Meters.of(0.75), Units.Meters.of(0.75));
+      SwerveDriveSimulation swerveDriveSimulation = new SwerveDriveSimulation(
+        driveTrainSimulationConfig,
+        new Pose2d(2, 2, new Rotation2d(0))
+      ); 
+
+      gyroIO = new GyroIOSim(swerveDriveSimulation.getGyroSimulation());
       driveSub = new Drivetrain(
-          new ModuleIOSim(),
-          new ModuleIOSim(),
-          new ModuleIOSim(),
-          new ModuleIOSim(),
-          gyroIO);
+          new ModuleIOSim(swerveDriveSimulation.getModules()[0]),
+          new ModuleIOSim(swerveDriveSimulation.getModules()[1]),
+          new ModuleIOSim(swerveDriveSimulation.getModules()[2]),
+          new ModuleIOSim(swerveDriveSimulation.getModules()[3]),
+          gyroIO,
+          swerveDriveSimulation
+      );
+
+      SimulatedArena.getInstance().addDriveTrainSimulation(swerveDriveSimulation);
     }
 
     autoChooser = new LoggedDashboardChooser<Command>("Auto Routine", AutoBuilder.buildAutoChooser());

@@ -2,6 +2,7 @@ package frc.robot.subsystems.drivetrain;
 
 import java.util.Optional;
 
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -11,6 +12,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -21,6 +23,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 
@@ -30,6 +33,8 @@ public class Drivetrain extends SubsystemBase {
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
+  private SwerveDriveSimulation driveSimulation;
+
   SwerveDriveOdometry odometry = new SwerveDriveOdometry(
     DriveConstants.kDriveKinematics, 
     new Rotation2d(),
@@ -38,7 +43,8 @@ public class Drivetrain extends SubsystemBase {
       new SwerveModulePosition(),
       new SwerveModulePosition(),
       new SwerveModulePosition()
-    }
+    },
+    new Pose2d(2, 2, new Rotation2d())
   );
 
   public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO) {
@@ -73,6 +79,12 @@ public class Drivetrain extends SubsystemBase {
     );
   }
 
+  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO, SwerveDriveSimulation DriveSim) {
+    this(flModuleIO, frModuleIO, blModuleIO, brModuleIO, gyroIO);
+    if (Robot.isReal()) throw new RuntimeException("Do not run simulation on the real robot!");
+    this.driveSimulation = DriveSim;
+  }
+
   @Override
   public void periodic() {
     gyroIO.updateInputs(gyroInputs);
@@ -84,8 +96,8 @@ public class Drivetrain extends SubsystemBase {
 
     ChassisSpeeds measuredChassisSpeeds = getRelativeChassisSpeeds();
     // Simulation only
-    if (gyroIO instanceof GyroIOSim) {
-      ((GyroIOSim) gyroIO).updateAngularVelocity(measuredChassisSpeeds.omegaRadiansPerSecond);
+    if (gyroIO instanceof GyroIOSimInstant) {
+      ((GyroIOSimInstant) gyroIO).updateAngularVelocity(measuredChassisSpeeds.omegaRadiansPerSecond);
     }
 
     Pose2d pose = odometry.update(
@@ -103,6 +115,10 @@ public class Drivetrain extends SubsystemBase {
       Logger.recordOutput("Drive/Odometry", pose);
       Logger.recordOutput("Drive/ChassisSpeeds/Measured", measuredChassisSpeeds);
     }
+
+    if (Robot.isSimulation()) {
+      Logger.recordOutput("FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
+    }
   }
 
   public void runVelocity(ChassisSpeeds speeds) {
@@ -115,7 +131,7 @@ public class Drivetrain extends SubsystemBase {
 
   public void runVelocity(ChassisSpeeds speeds, Boolean fieldRelative) {
     Rotation2d compensatedAngle = gyroInputs.angle.plus(new Rotation2d(gyroInputs.rate*0.05));
-    if (fieldRelative) speeds.toFieldRelativeSpeeds(compensatedAngle);
+    if (fieldRelative) speeds.toRobotRelativeSpeeds(compensatedAngle);
     
     Logger.recordOutput("Drive/ChassisSpeeds/Setpoint", speeds);
 
