@@ -11,13 +11,14 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
+import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -26,16 +27,19 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.subsystems.vision.ATVision;
+import frc.robot.subsystems.vision.ATVisionIO;
 
 public class Drivetrain extends SubsystemBase {
 
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
   private final GyroIO gyroIO;
+  private final ATVision vision;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
 
   private SwerveDriveSimulation driveSimulation;
 
-  SwerveDriveOdometry odometry = new SwerveDriveOdometry(
+  SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(
     DriveConstants.kDriveKinematics, 
     new Rotation2d(),
     new SwerveModulePosition[] {
@@ -47,12 +51,13 @@ public class Drivetrain extends SubsystemBase {
     new Pose2d(2, 2, new Rotation2d())
   );
 
-  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO) {
+  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO, ATVisionIO visionIO) {
     modules[0] = new Module(flModuleIO, 0);
     modules[1] = new Module(frModuleIO, 1);
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
     this.gyroIO = gyroIO;
+    this.vision = new ATVision(visionIO);
 
     RobotConfig config;
     try {
@@ -79,8 +84,8 @@ public class Drivetrain extends SubsystemBase {
     );
   }
 
-  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO, SwerveDriveSimulation DriveSim) {
-    this(flModuleIO, frModuleIO, blModuleIO, brModuleIO, gyroIO);
+  public Drivetrain(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO, GyroIO gyroIO, ATVisionIO visionIO, SwerveDriveSimulation DriveSim) {
+    this(flModuleIO, frModuleIO, blModuleIO, brModuleIO, gyroIO, visionIO);
     if (Robot.isReal()) throw new RuntimeException("Do not run simulation on the real robot!");
     this.driveSimulation = DriveSim;
   }
@@ -92,7 +97,10 @@ public class Drivetrain extends SubsystemBase {
 
     for (Module module : modules) {
       module.periodic();
+      vision.periodic();
     }
+
+    Optional<Pair<Pose3d, Double>> visionPose = vision.getBestFieldToRobot();
 
     ChassisSpeeds measuredChassisSpeeds = getRelativeChassisSpeeds();
     // Simulation only
@@ -100,10 +108,18 @@ public class Drivetrain extends SubsystemBase {
       ((GyroIOSimInstant) gyroIO).updateAngularVelocity(measuredChassisSpeeds.omegaRadiansPerSecond);
     }
 
-    Pose2d pose = odometry.update(
+    if (visionPose.isPresent()) {
+      Pose2d visionPose2d = new Pose2d(
+        new Translation2d(visionPose.get().getFirst().getTranslation().getX(), visionPose.get().getFirst().getTranslation().getY()),
+        new Rotation2d(visionPose.get().getFirst().getRotation().getZ())
+      );
+      poseEstimator.addVisionMeasurement(visionPose2d, visionPose.get().getSecond());
+    }
+    Pose2d pose = poseEstimator.update(
       gyroInputs.angle,
       getModulePositions()
     );
+
 
     if (DriverStation.isDisabled()) {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
@@ -179,11 +195,11 @@ public class Drivetrain extends SubsystemBase {
 
   @AutoLogOutput(key = "Drive/Odometry")
   public Pose2d getPose() {
-    return odometry.getPoseMeters();
+    return poseEstimator.getEstimatedPosition();
   }
 
   public void resetOdometry(Rotation2d rotation, SwerveModulePosition[] modulePositions, Pose2d pose) {
-    odometry.resetPosition(rotation, modulePositions, pose);
+    poseEstimator.resetPosition(rotation, modulePositions, pose);
   }
 
   public void resetOdometry(Pose2d pose) {
