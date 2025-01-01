@@ -14,6 +14,9 @@ import frc.robot.Constants.DriveConstants;
 public class Drivetrain extends SubsystemBase {
 
   private final Module[] modules = new Module[2]; // FL, FR, BL, BR
+  private final GyroIO gyroIO;
+  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
+
   private Rotation2d[] prevAngle = new Rotation2d[] {
       new Rotation2d(),
       new Rotation2d()
@@ -23,13 +26,17 @@ public class Drivetrain extends SubsystemBase {
   Translation2d baseYVec[] = { new Translation2d(0, 1), new Translation2d(0, 1) };
   Translation2d baseRotVec[] = { new Translation2d(-1, 1), new Translation2d(1, -1) };
 
-  public Drivetrain(ModuleIO flModuleIO, ModuleIO brModuleIO) {
+  public Drivetrain(ModuleIO flModuleIO, ModuleIO brModuleIO, GyroIO gyroIO) {
     modules[0] = new Module(flModuleIO, 0);
     modules[1] = new Module(brModuleIO, 3);
+    this.gyroIO = gyroIO;
   }
 
   @Override
   public void periodic() {
+    gyroIO.updateInputs(gyroInputs);
+    Logger.processInputs("Drive/Gyro", gyroInputs);
+
     for (Module module : modules) {
       module.periodic();
     }
@@ -41,9 +48,11 @@ public class Drivetrain extends SubsystemBase {
 
   public void runVelocity(ChassisSpeeds speeds) {
     Translation2d frontLeftVec = baseXVec[0].times(speeds.vxMetersPerSecond)
-        .plus(baseYVec[0].times(speeds.vyMetersPerSecond)).plus(baseRotVec[0].times(speeds.omegaRadiansPerSecond));
+        .plus(baseYVec[0].times(speeds.vyMetersPerSecond)).rotateBy(gyroInputs.angle.times(-1));
+    frontLeftVec = frontLeftVec.plus(baseRotVec[0].times(speeds.omegaRadiansPerSecond));
     Translation2d backRightVec = baseXVec[1].times(speeds.vxMetersPerSecond)
-        .plus(baseYVec[1].times(speeds.vyMetersPerSecond)).plus(baseRotVec[1].times(speeds.omegaRadiansPerSecond));
+        .plus(baseYVec[1].times(speeds.vyMetersPerSecond)).rotateBy(gyroInputs.angle.times(-1));
+    backRightVec = backRightVec.plus(baseRotVec[1].times(speeds.omegaRadiansPerSecond));
 
     SwerveModuleState[] desiredStates = new SwerveModuleState[] {
         new SwerveModuleState(frontLeftVec.getNorm(), frontLeftVec.getAngle()),

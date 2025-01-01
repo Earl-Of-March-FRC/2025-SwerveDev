@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.OIConstants;
 import frc.robot.commands.SwerveDriveCmd;
 import frc.robot.subsystems.drivetrain.Drivetrain;
+import frc.robot.subsystems.drivetrain.GyroIOADXRS450;
 import frc.robot.subsystems.drivetrain.ModuleIOMAXSwerve;
 
 public class RobotContainer {
@@ -17,7 +18,8 @@ public class RobotContainer {
   public RobotContainer() {
     driveSub = new Drivetrain(
         new ModuleIOMAXSwerve(0),
-        new ModuleIOMAXSwerve(3));
+        new ModuleIOMAXSwerve(3),
+        new GyroIOADXRS450());
 
     driveSub.setDefaultCommand(
         new SwerveDriveCmd(
